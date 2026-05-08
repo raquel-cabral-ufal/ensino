@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 4 — Intervalos de Confiança</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #131920;
+    --bg3: #1a2332;
+    --accent: #00c6ff;
+    --accent2: #f7971e;
+    --accent3: #56ccf2;
+    --text: #e8edf3;
+    --text-muted: #8899aa;
+    --border: rgba(0,198,255,0.15);
+    --card: rgba(26,35,50,0.8);
+    --green: #00e676;
+    --red: #ff5252;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 999;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    height: 58px;
+    gap: 0;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    margin-right: 2.5rem;
+    white-space: nowrap;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  /* ── CASE STUDY STYLES ── */
+  #caso { padding-top: 7rem; }
+
+  .slack-bubble {
+    background: #1e2a38;
+    border: 1px solid rgba(0,198,255,0.2);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    margin: 0.75rem 0;
+    position: relative;
+    font-size: 0.92rem;
+  }
+
+  .slack-bubble::before {
+    content: '';
+    position: absolute;
+    left: -6px; top: 18px;
+    width: 12px; height: 12px;
+    background: #1e2a38;
+    border-left: 1px solid rgba(0,198,255,0.2);
+    border-bottom: 1px solid rgba(0,198,255,0.2);
+    transform: rotate(45deg);
+  }
+
+  .slack-author {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .slack-author .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #00e676;
+    display: inline-block;
+  }
+
+  .slack-bubble em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  .question-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+  }
+
+  .question-block h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--accent2);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .q-item {
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 0;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .q-item:last-child { border: none; padding-bottom: 0; }
+
+  .q-num {
+    min-width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(247,151,30,0.15);
+    border: 1px solid rgba(247,151,30,0.3);
+    color: var(--accent2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .q-option {
+    display: inline-block;
+    background: rgba(0,198,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 0.3rem;
+    padding: 0.15rem 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent3);
+    margin-right: 0.35rem;
+  }
+
+  .reflection-area {
+    width: 100%;
+    min-height: 80px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    outline: none;
+    margin-top: 0.6rem;
+    transition: border 0.2s;
+  }
+
+  .reflection-area:focus { border-color: var(--accent); }
+  .reflection-area::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+  .reveal-answer-btn {
+    background: transparent;
+    border: 1px solid rgba(0,198,255,0.3);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.2rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .reveal-answer-btn:hover { background: rgba(0,198,255,0.08); }
+
+  .answer-hint {
+    display: none;
+    margin-top: 0.75rem;
+    background: rgba(0,230,118,0.06);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.88rem;
+    color: #7fffbf;
+    line-height: 1.65;
+  }
+
+  .answer-hint.visible { display: block; }
+
+  .data-highlight {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: rgba(0,198,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+
+  .dh-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+
+  .dh-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--accent);
+    display: block;
+  }
+
+  .dh-lbl {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.2rem;
+    display: block;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .part-badge {
+    background: linear-gradient(135deg, rgba(0,198,255,0.15), rgba(247,151,30,0.1));
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    padding: 0.3rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .part-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+
+  /* ── END CASE STUDY STYLES ── */
+
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0 1rem;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(0,198,255,0.05);
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 58px; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    z-index: 998;
+    transition: width 0.1s;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 6rem 6rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,198,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,198,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,198,255,0.12) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    color: #0d1117;
+    font-weight: 700;
+    font-size: 0.88rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.9rem 2rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.88rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.9rem 2rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-ghost:hover { background: rgba(0,198,255,0.06); border-color: var(--accent); }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 5rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 0.25rem; }
+
+  .stat-n {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-l { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 5rem 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .section-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 620px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    margin: 0 6rem;
+    max-width: 1100px;
+  }
+
+  /* ── CONCEPT CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .card:hover { border-color: rgba(0,198,255,0.35); transform: translateY(-3px); }
+  .card:hover::before { transform: scaleX(1); }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 0.5rem;
+    background: rgba(0,198,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.4rem;
+  }
+
+  .card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; }
+
+  /* ── FORMULA BOX ── */
+  .formula-block {
+    background: rgba(0,198,255,0.04);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 0.5rem 0.5rem 0;
+    padding: 1.5rem 2rem;
+    margin: 1.5rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.15rem;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .formula-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+
+  /* ── STEPS ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .step:hover { border-color: rgba(0,198,255,0.3); }
+
+  .step-num {
+    min-width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0d1117;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-body h4 { font-size: 1rem; margin-bottom: 0.35rem; }
+  .step-body p { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* ── TABLE ── */
+  .ci-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+
+  .ci-table thead tr {
+    background: linear-gradient(135deg, rgba(0,198,255,0.15), rgba(247,151,30,0.1));
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ci-table th {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+
+  .ci-table td {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid rgba(0,198,255,0.07);
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .ci-table tr:hover td { background: rgba(0,198,255,0.03); color: var(--text); }
+
+  .ci-table .mono { font-family: 'DM Mono', monospace; color: var(--accent2); font-size: 1rem; }
+
+  /* ── EXAMPLE PANELS ── */
+  .example-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    margin: 2rem 0;
+    position: relative;
+  }
+
+  .ex-badge {
+    position: absolute;
+    top: -12px; left: 2rem;
+    background: linear-gradient(135deg, var(--accent2), #f7971e);
+    color: #0d1117;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.9rem;
+    border-radius: 1rem;
+  }
+
+  .example-panel h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+    padding-top: 0.5rem;
+  }
+
+  .example-panel .given {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+
+  .given-item {
+    background: rgba(0,198,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+  }
+
+  .given-item .gval {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .given-item .glbl {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.2rem;
+  }
+
+  .result-box {
+    background: rgba(0,230,118,0.06);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+
+  .result-box .rlabel { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+
+  .result-box .rvalue {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.25rem;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  /* ── INTERACTIVE CALC ── */
+  .calc-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    margin: 2rem 0;
+  }
+
+  .calc-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+
+  .calc-box p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 2rem; }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: rgba(0,198,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .field select option { background: var(--bg2); }
+
+  .calc-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    color: #0d1117;
+    border: none;
+    border-radius: 0.4rem;
+    padding: 0.85rem 2rem;
+    font-weight: 700;
+    font-size: 0.88rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .calc-btn:hover { opacity: 0.85; }
+
+  #calc-result {
+    margin-top: 1.5rem;
+    display: none;
+  }
+
+  .result-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .result-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+
+  .result-item .rv { font-family: 'DM Mono', monospace; font-size: 1.2rem; color: var(--accent2); }
+  .result-item .rl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem; }
+
+  .ci-interval-display {
+    background: rgba(0,230,118,0.05);
+    border: 1px solid rgba(0,230,118,0.25);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.15rem;
+    color: var(--green);
+  }
+
+  /* ── DISTRIBUTION VISUAL ── */
+  .dist-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+
+  .dist-container canvas {
+    width: 100%;
+    height: 200px;
+    display: block;
+  }
+
+  /* ── ALERT / INFO ── */
+  .info-box {
+    background: rgba(0,198,255,0.06);
+    border: 1px solid rgba(0,198,255,0.25);
+    border-radius: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .info-box .ico { font-size: 1.3rem; flex-shrink: 0; }
+  .info-box .txt { font-size: 0.92rem; color: var(--text-muted); }
+  .info-box .txt strong { color: var(--text); }
+
+  /* ── COMPARISON ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .compare-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+  }
+
+  .compare-card.highlighted { border-color: rgba(0,198,255,0.4); }
+
+  .compare-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .compare-card ul { list-style: none; }
+  .compare-card ul li {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .compare-card ul li:last-child { border: none; }
+
+  .tag-z { color: var(--accent); font-weight: 600; }
+  .tag-t { color: var(--accent2); font-weight: 600; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 3rem 6rem;
+    margin-top: 5rem;
+    text-align: center;
+  }
+
+  footer p { color: var(--text-muted); font-size: 0.82rem; }
+  footer strong { color: var(--accent); }
+
+  /* ── CURVE SVG ── */
+  .curve-svg { width: 100%; max-width: 500px; display: block; margin: 1.5rem auto; }
+
+  /* ── NUMBER LINE ── */
+  .number-line {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.5rem auto;
+    max-width: 420px;
+    position: relative;
+    height: 70px;
+  }
+
+  .nl-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .nl-segment {
+    position: absolute;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    top: -1px;
+    border-radius: 2px;
+  }
+
+  .nl-label {
+    position: absolute;
+    top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .nl-tick {
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: var(--accent);
+    top: -5px;
+    transform: translateX(-50%);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 1rem; }
+    .nav-logo { font-size: 0.9rem; margin-right: 1rem; }
+    section, #hero, footer { padding: 4rem 1.5rem; }
+    .divider { margin: 0 1.5rem; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+    .result-row { grid-template-columns: 1fr; }
+  }
+
+  /* scroll animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">ESTAT. 4</div>
+  <div class="nav-links">
+    <a href="#caso">🔍 Estudo de Caso</a>
+    <a href="#intro">Introdução</a>
+    <a href="#estimativa">Estimativa</a>
+    <a href="#ic">IC</a>
+    <a href="#tabela-z">Tabela Z</a>
+    <a href="#variancia-conhecida">Variância Conhecida</a>
+    <a href="#variancia-desconhecida">Variância Desconhecida</a>
+    <a href="#t-student">Distribuição t</a>
+    <a href="#calculadora">Calculadora</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-tag">Estatística Inferencial · Aula 4</div>
+  <h1 class="hero-title">Intervalos de<br><span>Confiança</span></h1>
+  <p class="hero-sub">
+    Da estimativa pontual ao intervalo: como quantificar a incerteza e extrair conclusões confiáveis sobre uma população a partir de amostras.
+  </p>
+  <div class="hero-cta">
+    <a href="#caso" class="btn-primary">Começar pelo Estudo de Caso →</a>
+    <a href="#calculadora" class="btn-ghost">Calculadora Interativa</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-n">7</span>
+      <span class="stat-l">Módulos</span>
+    </div>
+    <div class="stat">
+      <span class="stat-n">5</span>
+      <span class="stat-l">Exemplos</span>
+    </div>
+    <div class="stat">
+      <span class="stat-n">95%</span>
+      <span class="stat-l">Confiança 😄</span>
+    </div>
+  </div>
+</div>
+
+
+<div class="divider"></div>
+
+<!-- ══════════ ESTUDO DE CASO ══════════ -->
+<section id="caso">
+  <div class="section-tag">Antes de começar · Estudo de Caso</div>
+  <h2 class="section-title reveal">"A rota /login melhorou?"</h2>
+  <p class="section-desc reveal">Um problema real de engenharia que você precisará resolver com Intervalos de Confiança. Reflita sobre cada parte antes de continuar a aula.</p>
+
+  <!-- CONTEXTO -->
+  <div class="example-panel reveal" style="border-color: rgba(247,151,30,0.3);">
+    <div class="ex-badge" style="background: linear-gradient(135deg,#1a2332,#223040); color:var(--accent); border:1px solid var(--border);">🏢 Contexto</div>
+    <h4 style="margin-top:0.5rem;">Você é engenheiro(a) em uma aplicação web</h4>
+    <p style="color:var(--text-muted); font-size:0.92rem; margin-top:0.5rem; margin-bottom:1.25rem;">
+      Na última semana, usuários reclamaram de lentidão no login. O time aplicou <strong style="color:var(--text);">duas mudanças</strong>:
+    </p>
+    <div class="card-grid" style="margin-top:0;">
+      <div class="card" style="padding:1.25rem;">
+        <div class="card-icon" style="font-size:1.1rem;">🗃️</div>
+        <h3 style="font-size:0.95rem;">Otimização de Query</h3>
+        <p>Otimizou uma consulta no banco de dados para a rota <code style="color:var(--accent); font-family:'DM Mono',monospace;">/login</code></p>
+      </div>
+      <div class="card" style="padding:1.25rem;">
+        <div class="card-icon" style="font-size:1.1rem;">⚙️</div>
+        <h3 style="font-size:0.95rem;">Ajuste de Cache</h3>
+        <p>Ajustou cache e pool de conexões para reduzir latência nas requisições.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLACK -->
+  <div class="reveal" style="margin: 2rem 0;">
+    <p style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.75rem;">💬 Slack · #engenharia</p>
+
+    <div style="padding-left: 1.5rem; border-left: 2px solid rgba(247,151,30,0.3);">
+      <div class="slack-bubble">
+        <div class="slack-author"><span class="dot"></span>Gerente · hoje, 09:47</div>
+        "Podemos afirmar que a média de latência do /login agora está <em>abaixo de 250 ms</em>? Vou reportar isso."
+      </div>
+
+      <div class="slack-bubble" style="margin-top:0.5rem; background:#162030; border-color:rgba(0,198,255,0.15);">
+        <div class="slack-author" style="color:var(--accent3);"><span class="dot" style="background:var(--accent3);"></span>Gerente · hoje, 09:48</div>
+        "220 é menor que 250, então está resolvido, né? Pode confirmar que sim?"
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:1rem; border-color:rgba(255,82,82,0.25); background:rgba(255,82,82,0.05);">
+      <span class="ico">⏰</span>
+      <div class="txt"><strong>Você tem 20 minutos para responder.</strong> Antes de dizer "sim" ou "não", veja os dados disponíveis.</div>
+    </div>
+  </div>
+
+  <!-- DADOS -->
+  <h3 class="reveal" style="font-family:'Playfair Display',serif; font-size:1.2rem; margin-bottom:0.75rem;">Dados da Amostra</h3>
+  <p class="reveal" style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">25 medições de latência (ms) do <code style="color:var(--accent); font-family:'DM Mono',monospace;">/login</code> coletadas entre 10:00–10:30, requisições típicas.</p>
+  <div class="data-highlight reveal">
+    <div class="dh-item">
+      <span class="dh-val">25</span>
+      <span class="dh-lbl">n · tamanho amostral</span>
+    </div>
+    <div class="dh-item">
+      <span class="dh-val">220 ms</span>
+      <span class="dh-lbl">x̄ · média amostral</span>
+    </div>
+    <div class="dh-item">
+      <span class="dh-val">60 ms</span>
+      <span class="dh-lbl">s · desvio padrão amostral</span>
+    </div>
+    <div class="dh-item">
+      <span class="dh-val">250 ms</span>
+      <span class="dh-lbl">limite · meta do gerente</span>
+    </div>
+  </div>
+
+  <!-- PARTE A -->
+  <div class="part-header reveal">
+    <span class="part-badge">Parte A</span>
+    <span class="part-title">Um número basta?</span>
+  </div>
+  <div class="question-block reveal">
+    <h4>🤔 Reflita antes de responder</h4>
+
+    <div class="q-item">
+      <div class="q-num">1</div>
+      <div>
+        Se você tivesse apenas <strong>x̄ = 220</strong>, o que responderia ao gerente? O que falta para ter confiança?
+        <br><textarea class="reflection-area" placeholder="Escreva sua reflexão aqui..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint">220 ms é apenas a média de <em>uma amostra</em> — é uma estimativa pontual. A probabilidade de a média real (µ) ser exatamente 220 é praticamente zero. Falta quantificar a <strong>incerteza</strong>: qual é a variabilidade? Quantas observações temos? Com que confiança podemos afirmar que µ &lt; 250?</div>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-num">2</div>
+      <div>
+        Se outra pessoa coletar <strong>outros 25 valores</strong> logo em seguida, a média será exatamente 220? Por quê?
+        <br><textarea class="reflection-area" placeholder="Escreva sua reflexão aqui..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint">Não. A média amostral é uma <strong>variável aleatória</strong> — cada amostra gera um valor diferente. É por isso que precisamos de um intervalo, não de um ponto. O Teorema do Limite Central nos diz que essas médias se distribuem em torno de µ com desvio padrão σ/√n.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTE B -->
+  <div class="part-header reveal">
+    <span class="part-badge">Parte B</span>
+    <span class="part-title">Intuição de engenharia</span>
+  </div>
+  <div class="question-block reveal">
+    <h4>💬 Qual frase é mais honesta para reportar?</h4>
+    <div class="q-item">
+      <div class="q-num">1</div>
+      <div>
+        Escolha a frase mais honesta e justifique em 1 frase:
+        <br>
+        <span class="q-option">(A)</span> "A média é 220."
+        <span class="q-option">(B)</span> "A média deve estar por volta de 220, com uma margem."
+        <span class="q-option">(C)</span> "Não dá para falar nada."
+        <br><textarea class="reflection-area" placeholder="Sua escolha e justificativa..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint"><strong>(B) é a mais honesta.</strong> (A) apresenta uma estimativa pontual como certeza — tecnicamente imprecisa. (C) é pessimismo desnecessário: os dados existem e permitem inferência. (B) reconhece a incerteza inerente a qualquer estimativa amostral.</div>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="q-num">2</div>
+      <div>
+        Em qual situação é mais fácil afirmar "µ &lt; 250"?
+        <br>
+        <span class="q-option">(1)</span> n = 25, s = 60 &nbsp;
+        <span class="q-option">(2)</span> n = 100, s = 60
+        <br><textarea class="reflection-area" placeholder="Sua resposta..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint"><strong>Situação (2) — n = 100.</strong> Com mais observações, o erro padrão cai (σ/√n fica menor), o intervalo de confiança fica mais estreito e mais próximo de 220, tornando mais fácil garantir que o limite superior ainda é &lt; 250.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTE C -->
+  <div class="part-header reveal">
+    <span class="part-badge">Parte C</span>
+    <span class="part-title">Construindo a ideia (sem nomear a fórmula)</span>
+  </div>
+  <div class="question-block reveal">
+    <h4>🔧 Raciocínio construtivo</h4>
+    <div class="q-item">
+      <div class="q-num">1</div>
+      <div>
+        Como você montaria uma <strong>faixa plausível</strong> para µ usando 220, 60 e 25? (descreva em palavras)
+        <br><textarea class="reflection-area" placeholder="Descreva o raciocínio..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint">Partindo da média amostral (220), calculamos o quanto ela pode variar: o "erro" depende da variabilidade (s = 60) dividida pela raiz do tamanho amostral (√25 = 5), dando um erro padrão de 12. Multiplicamos isso por um fator de confiança (zc ou t) e somamos/subtraímos à média — formando o intervalo.</div>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="q-num">2</div>
+      <div>
+        O que acontece com a faixa se: <span class="q-option">i) s aumenta</span> <span class="q-option">ii) n aumenta</span> <span class="q-option">iii) mais confiança</span>
+        <br><textarea class="reflection-area" placeholder="Para cada caso..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint">
+          <strong>(i) s aumenta →</strong> faixa mais larga (mais variabilidade = menos precisão).<br>
+          <strong>(ii) n aumenta →</strong> faixa mais estreita (mais dados = mais precisão).<br>
+          <strong>(iii) mais confiança →</strong> faixa mais larga (para ter mais certeza, o intervalo precisa ser maior).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTE D -->
+  <div class="part-header reveal">
+    <span class="part-badge">Parte D</span>
+    <span class="part-title">Decisão</span>
+  </div>
+  <div class="question-block reveal">
+    <h4>✅ Respondendo ao gerente</h4>
+    <div class="q-item">
+      <div class="q-num">1</div>
+      <div>
+        Para responder <strong>SIM</strong> à frase "µ &lt; 250", o que precisa acontecer com o <strong>limite superior</strong> da sua faixa plausível?
+        <br><textarea class="reflection-area" placeholder="Sua conclusão..."></textarea>
+        <button class="reveal-answer-btn" onclick="toggleAnswer(this)">Ver raciocínio esperado</button>
+        <div class="answer-hint">O <strong>limite superior</strong> do intervalo de confiança precisa ser <strong>menor que 250 ms</strong>. Se x̄ + E &lt; 250, então podemos afirmar com o nível de confiança escolhido que µ &lt; 250. Verifique: com n=25, s=60, x̄=220 e 95% de confiança, E ≈ t₂₄,₀.₀₂₅ · (60/√25) = 2,064 · 12 ≈ 24,8 ms → IC: [195,2 ; 244,8] — limite superior abaixo de 250! ✅</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box reveal" style="margin-top:2rem; border-color:rgba(0,230,118,0.3); background:rgba(0,230,118,0.05);">
+    <span class="ico">🚀</span>
+    <div class="txt">
+      <strong>Agora que você pensou sobre o problema —</strong> continue a aula para aprender formalmente os conceitos de Estimativa Pontual, Intervalo de Confiança, distribuições Z e t-Student que fundamentam todas essas respostas.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 1: INTRODUÇÃO ══════════ -->
+<section id="intro">
+  <div class="section-tag">Módulo 01</div>
+  <h2 class="section-title reveal">Por que estatística inferencial?</h2>
+  <p class="section-desc reveal">Com base em amostras, tiramos conclusões sobre a população inteira — com um grau de confiança mensurável.</p>
+
+  <div class="card-grid">
+    <div class="card reveal">
+      <div class="card-icon">📊</div>
+      <h3>Estatística Descritiva</h3>
+      <p>Já aprendemos a coletar, organizar e descrever dados; analisamos distribuições discretas e contínuas.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">🔍</div>
+      <h3>Inferência Estatística</h3>
+      <p>Estudar uma <strong>amostra</strong> de um universo de discurso e tirar conclusões para toda a <strong>população</strong>, com grau de confiança associado.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">🗳️</div>
+      <h3>Exemplo Prático</h3>
+      <p>As <strong>pesquisas eleitorais</strong>: feitas com uma pequena amostra, estimam com boa aproximação o resultado de toda a população — com margem de erro.</p>
+    </div>
+  </div>
+
+  <div class="info-box reveal">
+    <span class="ico">💡</span>
+    <div class="txt">
+      <strong>Objetivo:</strong> usar amostras para estimar parâmetros populacionais desconhecidos — como a média µ e o desvio padrão σ — de forma que a estimativa seja a mais precisa possível.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 2: ESTIMATIVA PONTUAL ══════════ -->
+<section id="estimativa">
+  <div class="section-tag">Módulo 02</div>
+  <h2 class="section-title reveal">Estimativa Pontual vs. Intervalar</h2>
+  <p class="section-desc reveal">Uma estimativa pontual fornece um único valor; uma estimativa intervalar fornece um intervalo com probabilidade de conter o parâmetro real.</p>
+
+  <div class="compare-grid reveal">
+    <div class="compare-card">
+      <h4>📍 Estimativa Pontual</h4>
+      <ul>
+        <li>✦ Valor único estimado para µ ou σ²</li>
+        <li>✦ Fácil de calcular: x̄ = Σxᵢ / n</li>
+        <li>✦ Probabilidade zero de ser exata</li>
+        <li>✦ Ex: x̄ = 12,4 (logo, estimativa de µ = 12,4)</li>
+      </ul>
+    </div>
+    <div class="compare-card highlighted">
+      <h4>📏 Estimativa Intervalar</h4>
+      <ul>
+        <li>✦ Intervalo para o parâmetro desconhecido</li>
+        <li>✦ Inclui margem de erro E</li>
+        <li>✦ Probabilidade <em>c</em> de conter µ</li>
+        <li>✦ Ex: 10,3 &lt; µ &lt; 14,5</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo</div>
+    <h4>Amostra com n = 50 observações</h4>
+    <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1rem;">9 20 18 16 9 9 11 13 22 16 5 18 6 6 5 12 25 17 23 7 10 9 10 10 5 11 18 18 9 9 17 13 11 7 14 6 11 12 11 6 12 14 11 9 18 12 12 17 11 20</p>
+    <div class="given">
+      <div class="given-item">
+        <div class="gval">12,4</div>
+        <div class="glbl">Média amostral x̄</div>
+      </div>
+      <div class="given-item">
+        <div class="gval">25,1</div>
+        <div class="glbl">Variância amostral s²</div>
+      </div>
+      <div class="given-item">
+        <div class="gval">n = 50</div>
+        <div class="glbl">Tamanho da amostra</div>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:1rem;">
+      <span class="ico">⚠️</span>
+      <div class="txt"><strong>Problema:</strong> A probabilidade de µ ser exatamente 12,4 é praticamente zero! Amostras diferentes geram médias diferentes — a média amostral é uma <em>variável aleatória</em>.</div>
+    </div>
+  </div>
+
+  <!-- Number line illustration -->
+  <div style="margin: 2rem 0; text-align:center;" class="reveal">
+    <svg class="curve-svg" viewBox="0 0 500 90" xmlns="http://www.w3.org/2000/svg">
+      <!-- axis line -->
+      <line x1="30" y1="55" x2="470" y2="55" stroke="rgba(0,198,255,0.3)" stroke-width="1.5"/>
+      <polygon points="470,55 462,51 462,59" fill="rgba(0,198,255,0.5)"/>
+
+      <!-- interval highlight -->
+      <rect x="165" y="48" width="170" height="14" rx="7" fill="rgba(0,198,255,0.15)" stroke="rgba(0,198,255,0.4)" stroke-width="1"/>
+
+      <!-- ticks -->
+      <line x1="165" y1="48" x2="165" y2="67" stroke="#00c6ff" stroke-width="2"/>
+      <line x1="250" y1="44" x2="250" y2="67" stroke="#f7971e" stroke-width="2"/>
+      <line x1="335" y1="48" x2="335" y2="67" stroke="#00c6ff" stroke-width="2"/>
+
+      <!-- labels -->
+      <text x="165" y="80" text-anchor="middle" fill="#00c6ff" font-size="12" font-family="DM Mono, monospace">10,3</text>
+      <text x="250" y="38" text-anchor="middle" fill="#f7971e" font-size="11" font-family="DM Sans, sans-serif">x̄ = 12,4</text>
+      <text x="335" y="80" text-anchor="middle" fill="#00c6ff" font-size="12" font-family="DM Mono, monospace">14,5</text>
+
+      <!-- axis numbers -->
+      <text x="80" y="72" text-anchor="middle" fill="#556677" font-size="11" font-family="DM Mono, monospace">9</text>
+      <text x="130" y="72" text-anchor="middle" fill="#556677" font-size="11" font-family="DM Mono, monospace">10</text>
+      <text x="200" y="72" text-anchor="middle" fill="#556677" font-size="11" font-family="DM Mono, monospace">11</text>
+      <text x="385" y="72" text-anchor="middle" fill="#556677" font-size="11" font-family="DM Mono, monospace">14</text>
+      <text x="420" y="72" text-anchor="middle" fill="#556677" font-size="11" font-family="DM Mono, monospace">15</text>
+
+      <!-- bracket labels -->
+      <text x="165" y="32" text-anchor="middle" fill="#8899aa" font-size="9" font-family="DM Sans, sans-serif">Extremo Esq.</text>
+      <text x="335" y="32" text-anchor="middle" fill="#8899aa" font-size="9" font-family="DM Sans, sans-serif">Extremo Dir.</text>
+    </svg>
+    <p style="font-size:0.82rem; color:var(--text-muted);">Representação da estimativa intervalar: 12,4 ± 2,1 → 10,3 &lt; µ &lt; 14,5</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 3: INTERVALO DE CONFIANÇA ══════════ -->
+<section id="ic">
+  <div class="section-tag">Módulo 03</div>
+  <h2 class="section-title reveal">O Intervalo de Confiança</h2>
+  <p class="section-desc reveal">O IC associa um nível de probabilidade <em>c</em> (confiança) à estimativa intervalar, usando a curva normal padrão.</p>
+
+  <!-- Normal curve SVG -->
+  <div class="dist-container reveal">
+    <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <!-- area fill center -->
+      <defs>
+        <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00c6ff" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#00c6ff" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+
+      <!-- left tail fill -->
+      <path d="M60,190 C80,190 100,180 110,150 C115,135 118,120 120,110 L120,190 Z" fill="rgba(247,151,30,0.15)"/>
+      <!-- right tail fill -->
+      <path d="M440,190 C440,190 440,110 442,110 C444,120 447,135 450,150 C460,180 480,190 500,190 Z" fill="rgba(247,151,30,0.15)"/>
+      <!-- center fill -->
+      <path d="M120,110 C150,60 200,20 280,15 C360,20 410,60 440,110 L440,190 L120,190 Z" fill="url(#cg)"/>
+
+      <!-- normal curve -->
+      <path d="M60,190 C80,190 100,180 110,150 C115,135 118,120 120,110 C150,60 200,20 280,15 C360,20 410,60 440,110 C442,120 445,135 450,150 C460,180 480,190 500,190"
+            stroke="#00c6ff" stroke-width="2.5" fill="none"/>
+
+      <!-- axis -->
+      <line x1="40" y1="190" x2="520" y2="190" stroke="rgba(0,198,255,0.3)" stroke-width="1.5"/>
+
+      <!-- critical value lines -->
+      <line x1="120" y1="108" x2="120" y2="192" stroke="#f7971e" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="440" y1="108" x2="440" y2="192" stroke="#f7971e" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="280" y1="12" x2="280" y2="192" stroke="rgba(0,198,255,0.25)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- labels -->
+      <text x="120" y="208" text-anchor="middle" fill="#f7971e" font-size="12" font-family="DM Mono, monospace">−zc</text>
+      <text x="280" y="208" text-anchor="middle" fill="#8899aa" font-size="12" font-family="DM Mono, monospace">z=0</text>
+      <text x="440" y="208" text-anchor="middle" fill="#f7971e" font-size="12" font-family="DM Mono, monospace">+zc</text>
+
+      <!-- area labels -->
+      <text x="280" y="100" text-anchor="middle" fill="#00c6ff" font-size="22" font-family="Playfair Display, serif" font-weight="700">c</text>
+      <text x="80" y="170" text-anchor="middle" fill="#f7971e" font-size="11" font-family="DM Sans, sans-serif">½(1−c)</text>
+      <text x="480" y="170" text-anchor="middle" fill="#f7971e" font-size="11" font-family="DM Sans, sans-serif">½(1−c)</text>
+    </svg>
+    <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem;">A área central <em>c</em> é o nível de confiança; as caudas têm área ½(1−c) cada.</p>
+  </div>
+
+  <!-- Z-score table -->
+  <h3 style="font-family: 'Playfair Display', serif; margin: 2rem 0 1rem;" class="reveal">Valores Críticos Comuns</h3>
+  <table class="ci-table reveal">
+    <thead>
+      <tr>
+        <th>Nível de Confiança (c)</th>
+        <th>Área em cada cauda</th>
+        <th>−zc</th>
+        <th>+zc</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>90%</td>
+        <td>0,05</td>
+        <td class="mono">−1,645</td>
+        <td class="mono">1,645</td>
+      </tr>
+      <tr>
+        <td>95%</td>
+        <td>0,025</td>
+        <td class="mono">−1,96</td>
+        <td class="mono">1,96</td>
+      </tr>
+      <tr>
+        <td>99%</td>
+        <td>0,005</td>
+        <td class="mono">−2,576</td>
+        <td class="mono">2,576</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box reveal">
+    <span class="ico">📖</span>
+    <div class="txt">
+      <strong>Teorema do Limite Central:</strong> quando n ≥ 30, a distribuição das médias amostrais aproxima-se de uma distribuição normal, independentemente da distribuição original — o que nos permite usar a tabela Z.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+
+<!-- ══════════ SECTION TABELA Z ══════════ -->
+<section id="tabela-z">
+  <div class="section-tag">Módulo 04 · Ferramenta Essencial</div>
+  <h2 class="section-title reveal">Como usar a Tabela Z no IC</h2>
+  <p class="section-desc reveal">No IC, a lógica de uso da tabela Z é o <em>inverso</em> do que você fazia antes. Entender essa virada é fundamental.</p>
+
+  <!-- COMPARAÇÃO ANTES / AGORA -->
+  <div class="compare-grid reveal">
+    <div class="compare-card">
+      <h4>⬅️ Antes: z → probabilidade</h4>
+      <ul>
+        <li>✦ Você tem um valor z</li>
+        <li>✦ Procura na tabela a área acumulada à esquerda: Φ(z) = P(Z ≤ z)</li>
+        <li>✦ Obtém a probabilidade</li>
+        <li>✦ <span style="font-family:'DM Mono',monospace; color:var(--accent3);">z = 1,33 → Φ(1,33) ≈ 0,9082</span></li>
+        <li style="color:var(--text-muted); font-style:italic; border:none; padding-top:0.5rem;">Interpretação: 90,82% da área fica à esquerda de 1,33</li>
+      </ul>
+    </div>
+    <div class="compare-card highlighted">
+      <h4>➡️ Agora: probabilidade → z</h4>
+      <ul>
+        <li>✦ Você tem a probabilidade-alvo (a confiança)</li>
+        <li>✦ Procura na tabela o z que produz aquela área</li>
+        <li>✦ Obtém o valor crítico zc</li>
+        <li>✦ <span style="font-family:'DM Mono',monospace; color:var(--accent);">0,975 na tabela → z = 1,96</span></li>
+        <li style="color:var(--text-muted); font-style:italic; border:none; padding-top:0.5rem;">É o <strong>inverso</strong>: você tem Φ(z) e quer achar z</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="formula-block reveal" style="font-size:1rem; text-align:left; padding: 1.25rem 1.75rem;">
+    <span style="color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:0.78rem; display:block; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.1em;">Resumo em uma frase</span>
+    Antes: "Tenho z → acho Φ(z)."&nbsp;&nbsp;&nbsp;Agora: "Tenho Φ(z) → acho z."
+  </div>
+
+  <!-- COMO CONVERTER -->
+  <h3 class="reveal" style="font-family:'Playfair Display',serif; font-size:1.2rem; margin: 2.5rem 0 0.75rem;">Por que procurar 0,975 (e não 0,025)?</h3>
+  <p class="reveal" style="color:var(--text-muted); font-size:0.92rem; margin-bottom:1.5rem;">A tabela Z dá a área acumulada <em>à esquerda</em>. A cauda direita (α/2) fica no lado oposto — então você precisa converter.</p>
+
+  <div class="dist-container reveal">
+    <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <defs>
+        <linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00c6ff" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="#00c6ff" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <!-- left fill (0.975 area) -->
+      <path d="M60,180 C80,180 110,165 140,130 C170,95 220,40 280,18 C340,40 400,120 430,155 L430,180 L60,180Z" fill="url(#lg2)"/>
+      <!-- right tail fill (0.025) -->
+      <path d="M430,155 C440,165 460,175 500,180 L430,180Z" fill="rgba(247,151,30,0.2)"/>
+      <!-- curve -->
+      <path d="M60,180 C80,180 110,165 140,130 C170,95 220,40 280,18 C340,40 390,95 420,130 C450,165 480,178 500,180" stroke="#00c6ff" stroke-width="2.5" fill="none"/>
+      <!-- axis -->
+      <line x1="40" y1="180" x2="520" y2="180" stroke="rgba(0,198,255,0.3)" stroke-width="1.5"/>
+      <!-- zc line -->
+      <line x1="430" y1="153" x2="430" y2="182" stroke="#f7971e" stroke-width="2" stroke-dasharray="4,3"/>
+      <!-- center -->
+      <line x1="280" y1="16" x2="280" y2="182" stroke="rgba(0,198,255,0.2)" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- labels -->
+      <text x="220" y="110" text-anchor="middle" fill="#00c6ff" font-size="18" font-family="Playfair Display,serif" font-weight="700">0,975</text>
+      <text x="220" y="128" text-anchor="middle" fill="#8899aa" font-size="10" font-family="DM Sans,sans-serif">P(Z ≤ zc) = 1 − α/2</text>
+      <text x="472" y="155" text-anchor="middle" fill="#f7971e" font-size="13" font-family="DM Mono,monospace">0,025</text>
+      <text x="472" y="168" text-anchor="middle" fill="#8899aa" font-size="9" font-family="DM Sans,sans-serif">α/2</text>
+      <text x="430" y="196" text-anchor="middle" fill="#f7971e" font-size="12" font-family="DM Mono,monospace">zc = 1,96</text>
+      <text x="280" y="196" text-anchor="middle" fill="#8899aa" font-size="11" font-family="DM Mono,monospace">0</text>
+    </svg>
+    <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem;">Para IC de 95%: a área acumulada até zc é 0,975 — você procura <em>0,975</em> na tabela Z.</p>
+  </div>
+
+  <!-- TABELA CONVERSÃO -->
+  <h3 class="reveal" style="font-family:'Playfair Display',serif; font-size:1.2rem; margin: 2.5rem 0 1rem;">Casos mais comuns</h3>
+  <table class="ci-table reveal">
+    <thead>
+      <tr>
+        <th>Confiança (c)</th>
+        <th>α = 1 − c</th>
+        <th>α/2 (cauda)</th>
+        <th>Alvo na tabela<br><small style="font-weight:400; text-transform:none; letter-spacing:0;">(1 − α/2)</small></th>
+        <th>zc encontrado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>90%</strong></td>
+        <td class="mono">0,10</td>
+        <td class="mono">0,05</td>
+        <td class="mono" style="color:var(--green);">0,9500</td>
+        <td class="mono">1,645</td>
+      </tr>
+      <tr>
+        <td><strong>95%</strong></td>
+        <td class="mono">0,05</td>
+        <td class="mono">0,025</td>
+        <td class="mono" style="color:var(--green);">0,9750</td>
+        <td class="mono">1,96</td>
+      </tr>
+      <tr>
+        <td><strong>99%</strong></td>
+        <td class="mono">0,01</td>
+        <td class="mono">0,005</td>
+        <td class="mono" style="color:var(--green);">0,9950</td>
+        <td class="mono">2,576</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box reveal" style="border-color: rgba(247,151,30,0.3); background: rgba(247,151,30,0.05);">
+    <span class="ico">⚠️</span>
+    <div class="txt">
+      Nos slides, "procurar 0,05 na tabela" só faz sentido para IC de <strong>90%</strong> — quando α/2 = 0,05 e o alvo acumulado é 1 − 0,05 = <strong>0,95</strong>. Para 95%, você procura 0,975. Para 99%, procura 0,995.
+    </div>
+  </div>
+
+  <!-- PASSO A PASSO -->
+  <h3 class="reveal" style="font-family:'Playfair Display',serif; font-size:1.2rem; margin: 2.5rem 0 1rem;">Passo a passo: como achar zc na tabela</h3>
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Defina o nível de confiança</h4>
+        <p>Ex.: 95% → c = 0,95</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Calcule α</h4>
+        <p>α = 1 − c = 1 − 0,95 = <span style="color:var(--accent); font-family:'DM Mono',monospace;">0,05</span></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Divida por 2 (IC bilateral)</h4>
+        <p>α/2 = 0,05 / 2 = <span style="color:var(--accent); font-family:'DM Mono',monospace;">0,025</span></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Converta para área acumulada à esquerda</h4>
+        <p>alvo = 1 − α/2 = 1 − 0,025 = <span style="color:var(--green); font-family:'DM Mono',monospace; font-weight:700;">0,975</span></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Procure 0,975 no corpo da tabela</h4>
+        <p>Encontre a célula mais próxima de 0,9750.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h4>Leia linha + coluna → zc</h4>
+        <p>Linha dá as duas primeiras casas (ex.: <span style="color:var(--accent2); font-family:'DM Mono',monospace;">1,9</span>), coluna dá a terceira (ex.: <span style="color:var(--accent2); font-family:'DM Mono',monospace;">0,06</span>) → <strong style="color:var(--accent);">zc = 1,96</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMATO ALTERNATIVO DA TABELA -->
+  <div class="example-panel reveal" style="margin-top:2rem;">
+    <div class="ex-badge" style="background:linear-gradient(135deg,#1a2332,#223040); color:var(--accent3); border:1px solid var(--border);">⚠️ Atenção</div>
+    <h4>E se a tabela mostrar a área entre 0 e z?</h4>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem; margin-bottom:1.25rem;">
+      Algumas tabelas não dão Φ(z) = P(Z ≤ z), mas sim <strong style="color:var(--text);">A(z) = P(0 ≤ Z ≤ z)</strong> — a área apenas entre 0 e z. Nesses casos, o cálculo muda:
+    </p>
+    <div class="compare-grid" style="margin:0;">
+      <div style="background:rgba(0,198,255,0.05); border:1px solid var(--border); border-radius:0.5rem; padding:1.25rem;">
+        <p style="font-size:0.78rem; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.75rem;">Tabela Φ(z) — área acumulada</p>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Para IC 95% → procure <span style="color:var(--green); font-family:'DM Mono',monospace;">0,9750</span> na tabela</p>
+      </div>
+      <div style="background:rgba(247,151,30,0.05); border:1px solid rgba(247,151,30,0.2); border-radius:0.5rem; padding:1.25rem;">
+        <p style="font-size:0.78rem; color:var(--accent2); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.75rem;">Tabela A(z) — área entre 0 e z</p>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Para IC 95% → procure <span style="color:var(--accent2); font-family:'DM Mono',monospace;">0,4750</span> na tabela<br>
+        <small>(0,5 − 0,025 = 0,475)</small></p>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:1rem; margin-bottom:0;">
+      <span class="ico">💡</span>
+      <div class="txt"><strong>Por isso é importante saber qual versão da tabela você está usando</strong> antes de fazer a leitura. O resultado final (zc = 1,96) é o mesmo — só o valor que você procura na tabela muda.</div>
+    </div>
+  </div>
+
+  <!-- MINI QUIZ INTERATIVO -->
+  <h3 class="reveal" style="font-family:'Playfair Display',serif; font-size:1.2rem; margin: 2.5rem 0 1rem;">🎯 Teste rápido</h3>
+  <div class="calc-box reveal" style="padding:2rem;">
+    <h3 style="font-size:1rem; margin-bottom:0.35rem;">Qual valor você procura na tabela Φ(z)?</h3>
+    <p>Selecione o nível de confiança e veja qual valor procurar na tabela.</p>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin:1rem 0;">
+      <button class="quiz-btn" onclick="showQuiz(this, 90)" style="flex:1; min-width:90px; padding:0.75rem; background:rgba(0,198,255,0.08); border:1px solid var(--border); border-radius:0.4rem; color:var(--text); font-size:0.9rem; cursor:pointer; transition:all 0.2s;">IC 90%</button>
+      <button class="quiz-btn" onclick="showQuiz(this, 95)" style="flex:1; min-width:90px; padding:0.75rem; background:rgba(0,198,255,0.08); border:1px solid var(--border); border-radius:0.4rem; color:var(--text); font-size:0.9rem; cursor:pointer; transition:all 0.2s;">IC 95%</button>
+      <button class="quiz-btn" onclick="showQuiz(this, 99)" style="flex:1; min-width:90px; padding:0.75rem; background:rgba(0,198,255,0.08); border:1px solid var(--border); border-radius:0.4rem; color:var(--text); font-size:0.9rem; cursor:pointer; transition:all 0.2s;">IC 99%</button>
+    </div>
+    <div id="quiz-result" style="display:none; margin-top:0.5rem;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.75rem; margin-bottom:1rem;">
+        <div class="given-item"><div class="gval" id="qr-alpha">—</div><div class="glbl">α = 1 − c</div></div>
+        <div class="given-item"><div class="gval" id="qr-alpha2">—</div><div class="glbl">α / 2 (cauda)</div></div>
+        <div class="given-item"><div class="gval" id="qr-alvo" style="color:var(--green);">—</div><div class="glbl">Procurar na tabela Φ(z)</div></div>
+        <div class="given-item"><div class="gval" id="qr-zc" style="color:var(--accent2);">—</div><div class="glbl">zc correspondente</div></div>
+      </div>
+      <div class="ci-interval-display" id="qr-frase" style="font-size:0.9rem; padding:0.85rem;">—</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 4: VARIÂNCIA CONHECIDA ══════════ -->
+<section id="variancia-conhecida">
+  <div class="section-tag">Módulo 05</div>
+  <h2 class="section-title reveal">IC com Variância Populacional Conhecida</h2>
+  <p class="section-desc reveal">Quando σ é conhecido, usamos a distribuição Z para construir o intervalo de confiança.</p>
+
+  <div class="formula-label reveal">Margem de Erro</div>
+  <div class="formula-block reveal">E = zc · (σ / √n)</div>
+
+  <div class="formula-label reveal" style="margin-top:1.5rem;">Intervalo de Confiança para µ</div>
+  <div class="formula-block reveal">x̄ − E  &lt;  µ  &lt;  x̄ + E</div>
+
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Calcule a média amostral x̄</h4>
+        <p>x̄ = Σxᵢ / n</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Identifique o desvio padrão populacional σ</h4>
+        <p>Dado pelo enunciado (variância conhecida).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Encontre o valor crítico zc</h4>
+        <p>Na tabela da normal padrão, localize zc correspondente ao nível de confiança.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Calcule a margem de erro E</h4>
+        <p>E = zc · σ / √n</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Forme o intervalo</h4>
+        <p>Extremo esq. = x̄ − E &nbsp;|&nbsp; Extremo dir. = x̄ + E</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exemplo 1 -->
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 1</div>
+    <h4>IC de 95% para a amostra de 50 observações (σ = 5,0)</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">12,4</div><div class="glbl">x̄</div></div>
+      <div class="given-item"><div class="gval">5,0</div><div class="glbl">σ</div></div>
+      <div class="given-item"><div class="gval">50</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">1,96</div><div class="glbl">zc (95%)</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 1,96 · (5,0 / √50) ≈ 1,96 · 0,707 ≈ <strong style="color:var(--accent2);">1,4</strong></p>
+    <div class="result-box">
+      <div class="rlabel">Intervalo de Confiança (95%)</div>
+      <div class="rvalue">11,0 &lt; µ &lt; 13,8</div>
+    </div>
+  </div>
+
+  <!-- Exemplo 2 -->
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 2</div>
+    <h4>IC de 90% — população normal com σ = 3, amostra de 25</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">6,08</div><div class="glbl">x̄</div></div>
+      <div class="given-item"><div class="gval">3</div><div class="glbl">σ</div></div>
+      <div class="given-item"><div class="gval">25</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">1,64</div><div class="glbl">zc (90%)</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 1,64 · (3 / √25) = 1,64 · 0,6 = <strong style="color:var(--accent2);">0,984</strong></p>
+    <div class="result-box">
+      <div class="rlabel">Intervalo de Confiança (90%)</div>
+      <div class="rvalue">5,096 &lt; µ &lt; 7,064</div>
+    </div>
+  </div>
+
+  <!-- Exemplo 3 -->
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 3</div>
+    <h4>Diretor de faculdade estima a idade média — n=20, σ=1,5, x̄=22,9</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">22,9</div><div class="glbl">x̄</div></div>
+      <div class="given-item"><div class="gval">1,5</div><div class="glbl">σ</div></div>
+      <div class="given-item"><div class="gval">20</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">1,645</div><div class="glbl">zc (90%)</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 1,645 · (1,5 / √20) ≈ <strong style="color:var(--accent2);">0,6</strong></p>
+    <div class="result-box">
+      <div class="rlabel">Com 90% de confiança, a média de idades está entre:</div>
+      <div class="rvalue">22,3 &lt; µ &lt; 23,5</div>
+    </div>
+  </div>
+
+  <div class="info-box reveal">
+    <span class="ico">📌</span>
+    <div class="txt">
+      <strong>Importante:</strong> conforme o nível de confiança aumenta, o intervalo fica <em>mais largo</em> (menos preciso). Para aumentar precisão sem reduzir confiança, <strong>aumente o tamanho da amostra n</strong>.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 5: VARIÂNCIA DESCONHECIDA ══════════ -->
+<section id="variancia-desconhecida">
+  <div class="section-tag">Módulo 06</div>
+  <h2 class="section-title reveal">IC com Variância Desconhecida — Amostras Grandes</h2>
+  <p class="section-desc reveal">Quando σ é desconhecido e n ≥ 30, substituímos σ pelo desvio padrão amostral s e continuamos usando a distribuição Z.</p>
+
+  <div class="formula-label reveal">Variância Amostral (estimador de σ²)</div>
+  <div class="formula-block reveal">s² = (1/(n−1)) · Σ(xᵢ − x̄)²</div>
+
+  <div class="formula-label reveal" style="margin-top:1.5rem;">Margem de Erro com s</div>
+  <div class="formula-block reveal">E = zc · (s / √n)</div>
+
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 4</div>
+    <h4>Amostra de n=100 com x̄=112 e s=11 — IC ao nível de 10%</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">112</div><div class="glbl">x̄</div></div>
+      <div class="given-item"><div class="gval">11</div><div class="glbl">s</div></div>
+      <div class="given-item"><div class="gval">100</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">1,645</div><div class="glbl">zc (90%)</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 1,645 · (11 / √100) = 1,645 · 1,1 = <strong style="color:var(--accent2);">1,81</strong></p>
+    <div class="result-box">
+      <div class="rlabel">Intervalo de Confiança (90%)</div>
+      <div class="rvalue">110,2 &lt; µ &lt; 113,8</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 6: T-STUDENT ══════════ -->
+<section id="t-student">
+  <div class="section-tag">Módulo 07</div>
+  <h2 class="section-title reveal">Distribuição t-Student — Amostras Pequenas</h2>
+  <p class="section-desc reveal">Quando n &lt; 30 e σ é desconhecido, não podemos usar a distribuição Normal — utilizamos a distribuição <em>t de Student</em>.</p>
+
+  <!-- t curve SVG -->
+  <div class="dist-container reveal">
+    <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <!-- normal curve (thinner tails) -->
+      <path d="M60,180 C100,180 140,160 170,120 C200,80 230,30 280,18 C330,30 360,80 390,120 C420,160 460,180 500,180"
+            stroke="rgba(0,198,255,0.4)" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+      <!-- t curve (fatter tails) -->
+      <path d="M60,180 C80,178 110,165 140,135 C170,105 220,40 280,18 C340,40 390,105 420,135 C450,165 480,178 500,180"
+            stroke="#f7971e" stroke-width="2.5" fill="none"/>
+
+      <!-- axis -->
+      <line x1="40" y1="180" x2="520" y2="180" stroke="rgba(0,198,255,0.25)" stroke-width="1.5"/>
+      <line x1="280" y1="12" x2="280" y2="182" stroke="rgba(0,198,255,0.2)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- labels -->
+      <text x="280" y="198" text-anchor="middle" fill="#8899aa" font-size="12" font-family="DM Mono, monospace">µ</text>
+
+      <!-- legend -->
+      <line x1="60" y1="25" x2="90" y2="25" stroke="rgba(0,198,255,0.5)" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="95" y="29" fill="#8899aa" font-size="10" font-family="DM Sans, sans-serif">Distribuição Z (Normal)</text>
+      <line x1="60" y1="42" x2="90" y2="42" stroke="#f7971e" stroke-width="2"/>
+      <text x="95" y="46" fill="#8899aa" font-size="10" font-family="DM Sans, sans-serif">Distribuição t-Student (caudas mais pesadas)</text>
+    </svg>
+    <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem;">Quando n → ∞, t → N(0,1). Para amostras pequenas, as caudas são mais pesadas.</p>
+  </div>
+
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">φ</div>
+      <h3>Graus de Liberdade</h3>
+      <p>O parâmetro φ identifica a curva t a usar: <strong>φ = n − 1</strong>, onde n é o tamanho da amostra.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">α</div>
+      <h3>Nível de Significância</h3>
+      <p>α representa a área na cauda direita. Para IC bilateral de 95%, α = 0,025 em cada cauda.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">E</div>
+      <h3>Margem de Erro</h3>
+      <p>Substituímos zc pelo valor t: <strong>E = t<sub>φ,α</sub> · (s / √n)</strong></p>
+    </div>
+  </div>
+
+  <h3 style="font-family: 'Playfair Display', serif; margin: 2.5rem 0 1rem;" class="reveal">Exemplos de Leitura na Tabela t</h3>
+  <table class="ci-table reveal">
+    <thead>
+      <tr>
+        <th>φ (graus liberdade)</th>
+        <th>α (cauda)</th>
+        <th>Notação</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>15</td>
+        <td>0,05 (5%)</td>
+        <td class="mono" style="font-size:0.85rem">t₁₅,₀.₀₅</td>
+        <td class="mono">1,7531</td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td>0,025 (2,5%)</td>
+        <td class="mono" style="font-size:0.85rem">t₂₀,₀.₀₂₅</td>
+        <td class="mono">2,0860</td>
+      </tr>
+      <tr>
+        <td>25</td>
+        <td>0,10 (10%)</td>
+        <td class="mono" style="font-size:0.85rem">t₂₅,₀.₁</td>
+        <td class="mono">2,4851</td>
+      </tr>
+      <tr>
+        <td>24</td>
+        <td>0,025 (2,5%)</td>
+        <td class="mono" style="font-size:0.85rem">t₂₄,₀.₀₂₅</td>
+        <td class="mono">2,0639</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>0,005 (0,5%)</td>
+        <td class="mono" style="font-size:0.85rem">t₇,₀.₀₀₅</td>
+        <td class="mono">3,4995</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Exemplo 5 -->
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 5</div>
+    <h4>Amostra de n=25 com x̄=15, s²=36 — IC de 95%</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">15</div><div class="glbl">x̄</div></div>
+      <div class="given-item"><div class="gval">6</div><div class="glbl">s = √36</div></div>
+      <div class="given-item"><div class="gval">25</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">φ = 24</div><div class="glbl">n − 1</div></div>
+      <div class="given-item"><div class="gval">α = 0,025</div><div class="glbl">nível bilateral</div></div>
+      <div class="given-item"><div class="gval">2,0639</div><div class="glbl">t₂₄,₀.₀₂₅</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 2,0639 · (6 / √25) = 2,0639 · 1,2 = <strong style="color:var(--accent2);">2,477</strong></p>
+    <div class="result-box">
+      <div class="rlabel">P(12,523 &lt; µ &lt; 17,477) = 0,95</div>
+      <div class="rvalue">12,523 &lt; µ &lt; 17,477</div>
+    </div>
+  </div>
+
+  <!-- Exemplo 6 -->
+  <div class="example-panel reveal">
+    <div class="ex-badge">Exemplo 6</div>
+    <h4>Vida útil de lâmpadas — n=8, x̄=1070h, s=125h — IC de 99%</h4>
+    <div class="given">
+      <div class="given-item"><div class="gval">1070</div><div class="glbl">x̄ (horas)</div></div>
+      <div class="given-item"><div class="gval">125</div><div class="glbl">s (horas)</div></div>
+      <div class="given-item"><div class="gval">8</div><div class="glbl">n</div></div>
+      <div class="given-item"><div class="gval">φ = 7</div><div class="glbl">n − 1</div></div>
+      <div class="given-item"><div class="gval">α = 0,005</div><div class="glbl">nível 99%</div></div>
+      <div class="given-item"><div class="gval">3,4995</div><div class="glbl">t₇,₀.₀₀₅</div></div>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:1rem;">E = 3,4995 · (125 / √8) = 3,4995 · 44,19 ≈ <strong style="color:var(--accent2);">154,66</strong></p>
+    <div class="result-box">
+      <div class="rlabel">Intervalo de Confiança (99%)</div>
+      <div class="rvalue">915,3 &lt; µ &lt; 1224,7</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ SECTION 7: CALCULADORA ══════════ -->
+<section id="calculadora">
+  <div class="section-tag">Ferramenta Interativa</div>
+  <h2 class="section-title reveal">Calculadora de IC</h2>
+  <p class="section-desc reveal">Insira os dados da sua amostra e obtenha o intervalo de confiança automaticamente.</p>
+
+  <div class="calc-box reveal">
+    <h3>🧮 Calcule seu Intervalo de Confiança</h3>
+    <p>Preencha os campos abaixo. Escolha o tipo de distribuição de acordo com o tamanho amostral e o conhecimento de σ.</p>
+
+    <div class="calc-grid">
+      <div class="field">
+        <label>Média Amostral (x̄)</label>
+        <input type="number" id="xbar" placeholder="Ex: 12.4" step="any">
+      </div>
+      <div class="field">
+        <label>Desvio Padrão (σ ou s)</label>
+        <input type="number" id="sigma" placeholder="Ex: 5.0" step="any">
+      </div>
+      <div class="field">
+        <label>Tamanho da Amostra (n)</label>
+        <input type="number" id="n" placeholder="Ex: 50" min="2">
+      </div>
+      <div class="field">
+        <label>Nível de Confiança</label>
+        <select id="conf">
+          <option value="0.90">90%</option>
+          <option value="0.95" selected>95%</option>
+          <option value="0.99">99%</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Distribuição</label>
+        <select id="dist">
+          <option value="z">Z — Normal (n ≥ 30 ou σ conhecido)</option>
+          <option value="t">t-Student (n &lt; 30 e σ desconhecido)</option>
+        </select>
+      </div>
+      <div class="field" id="df-field" style="display:none;">
+        <label>Graus de Liberdade (φ)</label>
+        <input type="number" id="df" placeholder="= n − 1" min="1">
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calcular()">Calcular Intervalo de Confiança</button>
+
+    <div id="calc-result">
+      <div class="result-row">
+        <div class="result-item">
+          <div class="rv" id="res-e">—</div>
+          <div class="rl">Margem de Erro (E)</div>
+        </div>
+        <div class="result-item">
+          <div class="rv" id="res-lower">—</div>
+          <div class="rl">Extremo Esquerdo</div>
+        </div>
+        <div class="result-item">
+          <div class="rv" id="res-upper">—</div>
+          <div class="rl">Extremo Direito</div>
+        </div>
+      </div>
+      <div class="ci-interval-display" id="res-interval">—</div>
+      <p style="text-align:center; color:var(--text-muted); font-size:0.82rem; margin-top:0.75rem;" id="res-zc"></p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Aula 4 · Estatística Inferencial — <strong>Intervalos de Confiança</strong></p>
+  <p style="margin-top:0.4rem;">Material didático compilado e organizado para estudo.</p>
+</footer>
+
+<script>
+
+
+  const quizData = {
+    90: { alpha: '0,10', alpha2: '0,05', alvo: '0,9500', zc: '1,645' },
+    95: { alpha: '0,05', alpha2: '0,025', alvo: '0,9750', zc: '1,96' },
+    99: { alpha: '0,01', alpha2: '0,005', alvo: '0,9950', zc: '2,576' },
+  };
+
+  function showQuiz(btn, conf) {
+    document.querySelectorAll('.quiz-btn').forEach(b => {
+      b.style.background = 'rgba(0,198,255,0.08)';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--text)';
+    });
+    btn.style.background = 'rgba(0,198,255,0.2)';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+
+    const d = quizData[conf];
+    document.getElementById('qr-alpha').textContent = d.alpha;
+    document.getElementById('qr-alpha2').textContent = d.alpha2;
+    document.getElementById('qr-alvo').textContent = d.alvo;
+    document.getElementById('qr-zc').textContent = 'zc = ' + d.zc;
+    document.getElementById('qr-frase').textContent =
+      'Para IC de ' + conf + '%: α=' + d.alpha + ' → α/2=' + d.alpha2 + ' → procure ' + d.alvo + ' na tabela Φ(z) → zc = ' + d.zc;
+    document.getElementById('quiz-result').style.display = 'block';
+  }
+
+  function toggleAnswer(btn) {
+    const hint = btn.nextElementSibling;
+    hint.classList.toggle('visible');
+    btn.textContent = hint.classList.contains('visible') ? 'Ocultar raciocínio' : 'Ver raciocínio esperado';
+  }
+
+  // ── PROGRESS BAR ──
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (window.scrollY / (h.scrollHeight - h.clientHeight)) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    // nav active
+    const sections = ['hero','caso','intro','estimativa','ic','tabela-z','variancia-conhecida','variancia-desconhecida','t-student','calculadora'];
+    const links = document.querySelectorAll('.nav-links a');
+    let current = '';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 100) current = id;
+    });
+    links.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+
+  // ── SCROLL REVEAL ──
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // ── DIST TOGGLE ──
+  document.getElementById('dist').addEventListener('change', function() {
+    document.getElementById('df-field').style.display = this.value === 't' ? '' : 'none';
+    if (this.value === 't') {
+      const n = parseInt(document.getElementById('n').value);
+      if (n) document.getElementById('df').value = n - 1;
+    }
+  });
+
+  document.getElementById('n').addEventListener('input', function() {
+    if (document.getElementById('dist').value === 't') {
+      document.getElementById('df').value = parseInt(this.value) - 1 || '';
+    }
+  });
+
+  // ── t critical values (approximate lookup table) ──
+  const tTable = {
+    // format: phi: {0.10: val, 0.05: val, 0.025: val, 0.01: val, 0.005: val}
+    1:  {0.10:3.0777,0.05:6.3138,0.025:12.706,0.01:31.821,0.005:63.657},
+    2:  {0.10:1.8856,0.05:2.9200,0.025:4.3027,0.01:6.9646,0.005:9.9248},
+    3:  {0.10:1.6377,0.05:2.3534,0.025:3.1824,0.01:4.5407,0.005:5.8409},
+    4:  {0.10:1.5332,0.05:2.1318,0.025:2.7764,0.01:3.7469,0.005:4.6041},
+    5:  {0.10:1.4759,0.05:2.0150,0.025:2.5706,0.01:3.3649,0.005:4.0321},
+    6:  {0.10:1.4398,0.05:1.9432,0.025:2.4469,0.01:3.1427,0.005:3.7074},
+    7:  {0.10:1.4149,0.05:1.8946,0.025:2.3646,0.01:2.9980,0.005:3.4995},
+    8:  {0.10:1.3968,0.05:1.8595,0.025:2.3060,0.01:2.8965,0.005:3.3554},
+    9:  {0.10:1.3830,0.05:1.8331,0.025:2.2622,0.01:2.8214,0.005:3.2498},
+    10: {0.10:1.3722,0.05:1.8125,0.025:2.2281,0.01:2.7638,0.005:3.1693},
+    11: {0.10:1.3634,0.05:1.7959,0.025:2.2010,0.01:2.7181,0.005:3.1058},
+    12: {0.10:1.3562,0.05:1.7823,0.025:2.1788,0.01:2.6810,0.005:3.0545},
+    13: {0.10:1.3502,0.05:1.7709,0.025:2.1604,0.01:2.6503,0.005:3.0123},
+    14: {0.10:1.3450,0.05:1.7613,0.025:2.1448,0.01:2.6245,0.005:2.9768},
+    15: {0.10:1.3406,0.05:1.7531,0.025:2.1315,0.01:2.6025,0.005:2.9467},
+    16: {0.10:1.3368,0.05:1.7459,0.025:2.1199,0.01:2.5835,0.005:2.9208},
+    17: {0.10:1.3334,0.05:1.7396,0.025:2.1098,0.01:2.5669,0.005:2.8982},
+    18: {0.10:1.3304,0.05:1.7341,0.025:2.1009,0.01:2.5524,0.005:2.8784},
+    19: {0.10:1.3277,0.05:1.7291,0.025:2.0930,0.01:2.5395,0.005:2.8609},
+    20: {0.10:1.3253,0.05:1.7247,0.025:2.0860,0.01:2.5280,0.005:2.8453},
+    21: {0.10:1.3232,0.05:1.7207,0.025:2.0796,0.01:2.5177,0.005:2.8314},
+    22: {0.10:1.3212,0.05:1.7171,0.025:2.0739,0.01:2.5083,0.005:2.8188},
+    23: {0.10:1.3195,0.05:1.7139,0.025:2.0687,0.01:2.4999,0.005:2.8073},
+    24: {0.10:1.3178,0.05:1.7109,0.025:2.0639,0.01:2.4922,0.005:2.7969},
+    25: {0.10:1.3163,0.05:1.7081,0.025:2.0595,0.01:2.4851,0.005:2.7874},
+    30: {0.10:1.3104,0.05:1.6973,0.025:2.0423,0.01:2.4573,0.005:2.7500},
+  };
+
+  function getTCritical(phi, alpha) {
+    phi = parseInt(phi);
+    if (phi >= 30) return {1.90:1.282,0.90:1.282,0.95:1.645,0.99:2.326}[alpha] || 1.645;
+    const row = tTable[phi] || tTable[25];
+    return row[alpha] || row[0.025];
+  }
+
+  function calcular() {
+    const xbar = parseFloat(document.getElementById('xbar').value);
+    const sigma = parseFloat(document.getElementById('sigma').value);
+    const n = parseInt(document.getElementById('n').value);
+    const conf = parseFloat(document.getElementById('conf').value);
+    const dist = document.getElementById('dist').value;
+
+    if (isNaN(xbar) || isNaN(sigma) || isNaN(n) || n < 2) {
+      alert('Preencha todos os campos corretamente!');
+      return;
+    }
+
+    let crit, critLabel;
+    if (dist === 'z') {
+      const zMap = {0.90:1.645, 0.95:1.96, 0.99:2.576};
+      crit = zMap[conf];
+      critLabel = `zc = ${crit} (nível ${(conf*100).toFixed(0)}%)`;
+    } else {
+      const phi = parseInt(document.getElementById('df').value) || (n - 1);
+      const alpha = (1 - conf) / 2;
+      crit = getTCritical(phi, alpha);
+      critLabel = `t(φ=${phi}, α=${alpha}) = ${crit.toFixed(4)}`;
+    }
+
+    const E = crit * (sigma / Math.sqrt(n));
+    const lower = xbar - E;
+    const upper = xbar + E;
+
+    document.getElementById('res-e').textContent = E.toFixed(4);
+    document.getElementById('res-lower').textContent = lower.toFixed(4);
+    document.getElementById('res-upper').textContent = upper.toFixed(4);
+    document.getElementById('res-interval').textContent = `${lower.toFixed(4)}  <  µ  <  ${upper.toFixed(4)}`;
+    document.getElementById('res-zc').textContent = `Valor crítico: ${critLabel} · Erro padrão = ${(sigma/Math.sqrt(n)).toFixed(4)}`;
+
+    const r = document.getElementById('calc-result');
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>
